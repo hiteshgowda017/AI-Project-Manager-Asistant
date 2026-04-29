@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Project Manager Assistant - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page page--dashboard">
+    <header class="topbar topbar--solid">
+      <div class="brand">
+        <span class="brand__mark">APM</span>
+        <span class="brand__name">AI Project Manager Assistant</span>
+      </div>
+      <nav class="topbar__actions">
+        <div class="status-inline" id="apiStatusInline">
+          <span class="dot"></span>
+          <span>API: Checking...</span>
+        </div>
+        <a class="button button--ghost" href="index.html">Back to Overview</a>
+      </nav>
+    </header>
+
+    <main class="dashboard">
+      <aside class="sidebar">
+        <div class="card">
+          <div class="card__header">
+            <h3>Workspaces</h3>
+            <button class="button button--small" id="createWorkspaceButton">
+              New
+            </button>
+          </div>
+          <div class="list" id="workspaceList"></div>
+          <div class="inline-form" id="workspaceForm" hidden>
+            <input
+              type="text"
+              id="workspaceName"
+              placeholder="Workspace name"
+            />
+            <textarea
+              id="workspaceDescription"
+              placeholder="Description"
+              rows="2"
+            ></textarea>
+            <button class="button" id="saveWorkspaceButton">Save</button>
+            <button class="button button--ghost" id="cancelWorkspaceButton">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__header">
+            <h3>Projects</h3>
+            <button class="button button--small" id="createProjectButton">
+              New
+            </button>
+          </div>
+          <div class="list" id="projectList"></div>
+          <div class="inline-form" id="projectForm" hidden>
+            <input
+              type="text"
+              id="projectName"
+              placeholder="Project name"
+            />
+            <textarea
+              id="projectDescription"
+              placeholder="Description"
+              rows="2"
+            ></textarea>
+            <input type="date" id="projectStartDate" />
+            <input type="date" id="projectEndDate" />
+            <input type="text" id="projectOwner" placeholder="Owner" />
+            <button class="button" id="saveProjectButton">Save</button>
+            <button class="button button--ghost" id="cancelProjectButton">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="content">
+        <div class="content__header">
+          <div>
+            <p class="eyebrow">Active Project</p>
+            <h2 id="activeProjectName">Select a project</h2>
+            <p id="activeProjectMeta" class="muted"></p>
+          </div>
+          <div class="actions">
+            <button class="button" id="refreshInsightsButton">Refresh Insights</button>
+            <button class="button button--ghost" id="loadHealthButton">Load Health</button>
+          </div>
+        </div>
+
+        <div class="grid grid--two">
+          <div class="card card--wide">
+            <div class="card__header">
+              <h3>Project Health</h3>
+              <span id="healthStatus" class="pill">--</span>
+            </div>
+            <div class="health" id="healthPanel">
+              <div>
+                <p class="label">Risk Score</p>
+                <p class="value" id="healthScore">--</p>
+              </div>
+              <div>
+                <p class="label">Signals</p>
+                <ul id="healthSignals"></ul>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card__header">
+              <h3>AI Insights</h3>
+              <span class="pill pill--neutral" id="insightCount">0</span>
+            </div>
+            <div class="stack" id="insightList"></div>
+          </div>
+        </div>
+
+        <div class="card card--wide">
+          <div class="card__header">
+            <h3>Execution Board</h3>
+            <button class="button button--small" id="createTaskButton">
+              Add Task
+            </button>
+          </div>
+          <div class="board">
+            <div class="board__column">
+              <h4>To Do</h4>
+              <div class="stack" id="todoColumn"></div>
+            </div>
+            <div class="board__column">
+              <h4>In Progress</h4>
+              <div class="stack" id="progressColumn"></div>
+            </div>
+            <div class="board__column">
+              <h4>Done</h4>
+              <div class="stack" id="doneColumn"></div>
+            </div>
+          </div>
+          <div class="inline-form" id="taskForm" hidden>
+            <input type="text" id="taskTitle" placeholder="Task title" />
+            <textarea id="taskDescription" rows="2" placeholder="Description"></textarea>
+            <div class="inline-form__row">
+              <select id="taskStatus">
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="done">Done</option>
+                <option value="backlog">Backlog</option>
+                <option value="blocked">Blocked</option>
+              </select>
+              <select id="taskPriority">
+                <option value="">Priority</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+              <input type="date" id="taskDueDate" />
+            </div>
+            <button class="button" id="saveTaskButton">Save Task</button>
+            <button class="button button--ghost" id="cancelTaskButton">Cancel</button>
+          </div>
+        </div>
+
+        <div class="grid grid--two">
+          <div class="card">
+            <div class="card__header">
+              <h3>AI Task Generator</h3>
+            </div>
+            <textarea
+              id="aiTaskPrompt"
+              rows="4"
+              placeholder="Describe upcoming deliverables, milestones, and constraints"
+            ></textarea>
+            <button class="button" id="generateTasksButton">Generate Drafts</button>
+            <div class="stack" id="taskDraftList"></div>
+            <button class="button button--ghost" id="commitTasksButton" disabled>
+              Commit Drafts
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card__header">
+              <h3>AI Decision Assistant</h3>
+            </div>
+            <input
+              type="text"
+              id="decisionQuestion"
+              placeholder="Decision question"
+            />
+            <textarea
+              id="decisionOptions"
+              rows="4"
+              placeholder="List options, one per line"
+            ></textarea>
+            <button class="button" id="askDecisionButton">Get Recommendation</button>
+            <div class="stack" id="decisionList"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

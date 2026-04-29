@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Project Manager Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="page page--landing">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__mark">APM</span>
+        <span class="brand__name">AI Project Manager Assistant</span>
+      </div>
+      <nav class="topbar__actions">
+        <a class="button button--ghost" href="dashboard.html">Open Workspace</a>
+        <a class="button" href="#signup">Request Access</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero__content">
+          <p class="eyebrow">Multi-Project Intelligence Platform</p>
+          <h1>
+            Lead delivery with clarity, foresight, and AI support built for modern
+            project teams.
+          </h1>
+          <p class="hero__subtitle">
+            Plan work, monitor execution, surface delivery risk early, and
+            automate reporting across every project portfolio.
+          </p>
+          <div class="hero__actions">
+            <a class="button" href="dashboard.html">Launch Dashboard</a>
+            <button class="button button--ghost" id="demoTrigger">
+              View Live API Status
+            </button>
+          </div>
+          <div class="hero__status" id="apiStatus">
+            <span class="status-pill">API: Unknown</span>
+            <span class="status-text">Connect to the backend to verify status.</span>
+          </div>
+        </div>
+        <div class="hero__panel">
+          <div class="panel card">
+            <h3>Executive Visibility</h3>
+            <p>
+              Monitor portfolio health, delivery risks, and decision trails in one
+              consolidated view.
+            </p>
+          </div>
+          <div class="panel card">
+            <h3>AI Guidance</h3>
+            <p>
+              Generate structured tasks, run scenario decisions, and surface the
+              right signals before delivery shifts.
+            </p>
+          </div>
+          <div class="panel card">
+            <h3>Precision Reporting</h3>
+            <p>
+              Ship stakeholder-ready reports in minutes with consistent
+              formatting and accountability.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="signup">
+        <div class="section__header">
+          <h2>Built for enterprise PMO teams</h2>
+          <p>
+            A disciplined UX, reliable data flows, and actionable AI outputs
+            across every portfolio tier.
+          </p>
+        </div>
+        <div class="grid grid--three">
+          <div class="card">
+            <h4>Multi-project workspaces</h4>
+            <p>Organize initiatives by workspace with shared governance.</p>
+          </div>
+          <div class="card">
+            <h4>Execution intelligence</h4>
+            <p>Track flow, blockers, and progress against time-bound goals.</p>
+          </div>
+          <div class="card">
+            <h4>Decision memory</h4>
+            <p>Document AI-backed decisions with confidence scores.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div>AI Project Manager Assistant</div>
+      <div>Production-grade portfolio intelligence.</div>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
