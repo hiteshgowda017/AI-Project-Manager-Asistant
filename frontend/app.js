@@ -1,10 +1,10 @@
 const App = (() => {
   const config = {
-    apiBaseUrl:
-      window.API_BASE_URL ||
-      localStorage.getItem("apiBaseUrl") ||
-      "/api/v1",
-  };
+  apiBaseUrl:
+    window.API_BASE_URL ||
+    localStorage.getItem("apiBaseUrl") ||
+    "https://ai-pm-backend-0lfc.onrender.com/api/v1",
+ };
 
   const state = {
     workspaces: [],
