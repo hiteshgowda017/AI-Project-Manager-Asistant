@@ -27,8 +27,8 @@
       </nav>
     </header>
 
-    <main class="dashboard">
-      <aside class="sidebar">
+    <main class="dashboard dashboard--v2">
+      <aside class="panel panel--left">
         <div class="card">
           <div class="card__header">
             <h3>Workspaces</h3>
@@ -38,16 +38,13 @@
           </div>
           <div class="list" id="workspaceList"></div>
           <div class="inline-form" id="workspaceForm" hidden>
-            <input
-              type="text"
-              id="workspaceName"
-              placeholder="Workspace name"
-            />
+            <input type="text" id="workspaceName" placeholder="Workspace name" />
             <textarea
               id="workspaceDescription"
               placeholder="Description"
               rows="2"
             ></textarea>
+            <input type="text" id="workspaceDomain" placeholder="Domain" />
             <button class="button" id="saveWorkspaceButton">Save</button>
             <button class="button button--ghost" id="cancelWorkspaceButton">
               Cancel
@@ -64,63 +61,92 @@
           </div>
           <div class="list" id="projectList"></div>
           <div class="inline-form" id="projectForm" hidden>
-            <input
-              type="text"
-              id="projectName"
-              placeholder="Project name"
-            />
+            <input type="text" id="projectName" placeholder="Project name" />
             <textarea
               id="projectDescription"
               placeholder="Description"
               rows="2"
             ></textarea>
-            <input type="date" id="projectStartDate" />
-            <input type="date" id="projectEndDate" />
-            <input type="text" id="projectOwner" placeholder="Owner" />
+            <div class="inline-form__row">
+              <input type="date" id="projectStartDate" />
+              <input type="date" id="projectEndDate" />
+            </div>
+            <div class="inline-form__row">
+              <input type="text" id="projectOwner" placeholder="Owner" />
+              <select id="projectPriority">
+                <option value="">Priority</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+              <select id="projectStatus">
+                <option value="planned">Planned</option>
+                <option value="active">Active</option>
+                <option value="blocked">Blocked</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
             <button class="button" id="saveProjectButton">Save</button>
             <button class="button button--ghost" id="cancelProjectButton">
               Cancel
             </button>
           </div>
         </div>
+
+        <div class="card">
+          <div class="card__header">
+            <h3>Reports</h3>
+            <span class="pill pill--neutral" id="reportCount">0</span>
+          </div>
+          <div class="list" id="reportList"></div>
+        </div>
       </aside>
 
-      <section class="content">
-        <div class="content__header">
-          <div>
-            <p class="eyebrow">Active Project</p>
-            <h2 id="activeProjectName">Select a project</h2>
-            <p id="activeProjectMeta" class="muted"></p>
+      <section class="panel panel--center">
+        <div class="card card--wide">
+          <div class="content__header">
+            <div>
+              <p class="eyebrow">Selected Project</p>
+              <h2 id="activeProjectName">Select a project</h2>
+              <p id="activeProjectMeta" class="muted"></p>
+            </div>
+            <div class="actions">
+              <button class="button" id="refreshInsightsButton">Refresh Insights</button>
+              <button class="button button--ghost" id="loadHealthButton">Load Health</button>
+              <button class="button button--ghost" id="markProjectCompletedButton" disabled>
+                Mark Completed
+              </button>
+            </div>
           </div>
-          <div class="actions">
-            <button class="button" id="refreshInsightsButton">Refresh Insights</button>
-            <button class="button button--ghost" id="loadHealthButton">Load Health</button>
+
+          <div class="overview">
+            <div>
+              <p class="label">Timeline</p>
+              <p class="value" id="projectTimeline">--</p>
+              <p class="muted" id="projectOwnerDisplay">Owner: --</p>
+            </div>
+            <div>
+              <p class="label">Progress</p>
+              <p class="value" id="projectProgressText">--</p>
+              <div class="progress">
+                <div class="progress__bar" id="projectProgressBar"></div>
+              </div>
+            </div>
+            <div>
+              <p class="label">Priority</p>
+              <p class="value" id="projectPriorityDisplay">--</p>
+              <p class="muted" id="projectStatusDisplay">Status: --</p>
+            </div>
           </div>
         </div>
 
-        <div class="grid grid--two">
-          <div class="card card--wide">
-            <div class="card__header">
-              <h3>Project Health</h3>
-              <span id="healthStatus" class="pill">--</span>
-            </div>
-            <div class="health" id="healthPanel">
-              <div>
-                <p class="label">Risk Score</p>
-                <p class="value" id="healthScore">--</p>
-              </div>
-              <div>
-                <p class="label">Signals</p>
-                <ul id="healthSignals"></ul>
-              </div>
-            </div>
+        <div class="card card--wide" id="reportDetailCard">
+          <div class="card__header">
+            <h3>Completion Report</h3>
+            <span class="pill" id="reportStatus">--</span>
           </div>
-          <div class="card">
-            <div class="card__header">
-              <h3>AI Insights</h3>
-              <span class="pill pill--neutral" id="insightCount">0</span>
-            </div>
-            <div class="stack" id="insightList"></div>
+          <div class="report" id="reportDetail">
+            <p class="muted">Select a completed project report to view details.</p>
           </div>
         </div>
 
@@ -133,16 +159,24 @@
           </div>
           <div class="board">
             <div class="board__column">
-              <h4>To Do</h4>
-              <div class="stack" id="todoColumn"></div>
+              <h4>Planned</h4>
+              <div class="stack" id="plannedColumn"></div>
             </div>
             <div class="board__column">
               <h4>In Progress</h4>
               <div class="stack" id="progressColumn"></div>
             </div>
             <div class="board__column">
-              <h4>Done</h4>
+              <h4>Review</h4>
+              <div class="stack" id="reviewColumn"></div>
+            </div>
+            <div class="board__column">
+              <h4>Completed</h4>
               <div class="stack" id="doneColumn"></div>
+            </div>
+            <div class="board__column">
+              <h4>Blocked</h4>
+              <div class="stack" id="blockedColumn"></div>
             </div>
           </div>
           <div class="inline-form" id="taskForm" hidden>
@@ -150,10 +184,10 @@
             <textarea id="taskDescription" rows="2" placeholder="Description"></textarea>
             <div class="inline-form__row">
               <select id="taskStatus">
-                <option value="todo">To Do</option>
+                <option value="planned">Planned</option>
                 <option value="in_progress">In Progress</option>
-                <option value="done">Done</option>
-                <option value="backlog">Backlog</option>
+                <option value="review">Review</option>
+                <option value="completed">Completed</option>
                 <option value="blocked">Blocked</option>
               </select>
               <select id="taskPriority">
@@ -164,6 +198,7 @@
                 <option value="critical">Critical</option>
               </select>
               <input type="date" id="taskDueDate" />
+              <input type="text" id="taskAssignedTo" placeholder="Assigned to" />
             </div>
             <button class="button" id="saveTaskButton">Save Task</button>
             <button class="button button--ghost" id="cancelTaskButton">Cancel</button>
@@ -191,11 +226,7 @@
             <div class="card__header">
               <h3>AI Decision Assistant</h3>
             </div>
-            <input
-              type="text"
-              id="decisionQuestion"
-              placeholder="Decision question"
-            />
+            <input type="text" id="decisionQuestion" placeholder="Decision question" />
             <textarea
               id="decisionOptions"
               rows="4"
@@ -206,6 +237,47 @@
           </div>
         </div>
       </section>
+
+      <aside class="panel panel--right">
+        <div class="card">
+          <div class="card__header">
+            <h3>AI Alerts</h3>
+            <span class="pill pill--neutral" id="insightCount">0</span>
+          </div>
+          <div class="stack" id="insightList"></div>
+        </div>
+
+        <div class="card">
+          <div class="card__header">
+            <h3>Project Health</h3>
+            <span id="healthStatus" class="pill">--</span>
+          </div>
+          <div class="health" id="healthPanel">
+            <div>
+              <p class="label">Risk Score</p>
+              <p class="value" id="healthScore">--</p>
+            </div>
+            <div>
+              <p class="label">Signals</p>
+              <ul id="healthSignals"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__header">
+            <h3>Risks</h3>
+          </div>
+          <div class="stack" id="riskList"></div>
+        </div>
+
+        <div class="card">
+          <div class="card__header">
+            <h3>Suggestions</h3>
+          </div>
+          <div class="stack" id="suggestionList"></div>
+        </div>
+      </aside>
     </main>
 
     <div class="toast" id="toast"></div>

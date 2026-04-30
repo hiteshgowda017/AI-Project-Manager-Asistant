@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Tuple
+from datetime import datetime, date
 
 from services.data_service import DataService
 from services.project_service import ProjectService
@@ -56,8 +57,16 @@ class AIService:
             for item in DataService.list_collection("tasks")
             if item.get("projectId") == project_id
         ]
-        blocked = len([t for t in tasks if t.get("status") == "blocked"])
-        overdue = len([t for t in tasks if t.get("dueDate")])
+        blocked = len([t for t in tasks if AIService._normalize_task_status(t.get("status")) == "blocked"])
+        in_progress = len(
+            [t for t in tasks if AIService._normalize_task_status(t.get("status")) == "in_progress"]
+        )
+        review = len([t for t in tasks if AIService._normalize_task_status(t.get("status")) == "review"])
+        planned = len([t for t in tasks if AIService._normalize_task_status(t.get("status")) == "planned"])
+        completed = len(
+            [t for t in tasks if AIService._normalize_task_status(t.get("status")) == "completed"]
+        )
+        overdue = len([t for t in tasks if AIService._is_task_overdue(t)])
         insights = []
         now = DataService.now_iso()
         if blocked > 0:
@@ -66,8 +75,8 @@ class AIService:
                     "id": DataService.new_id(),
                     "projectId": project_id,
                     "type": "risk",
-                    "title": "Blocked tasks detected",
-                    "summary": f"{blocked} tasks are blocked and may impact delivery.",
+                    "title": "Blockers require escalation",
+                    "summary": f"{blocked} tasks are blocked and may impact delivery dates.",
                     "severity": "high" if blocked >= 3 else "medium",
                     "recommendations": [
                         "Review blockers with owners",
@@ -81,11 +90,38 @@ class AIService:
                 {
                     "id": DataService.new_id(),
                     "projectId": project_id,
-                    "type": "delivery",
-                    "title": "Tasks with due dates",
-                    "summary": f"{overdue} tasks have due dates; verify timelines.",
-                    "severity": "low",
-                    "recommendations": ["Validate due dates", "Adjust workload"],
+                    "type": "schedule",
+                    "title": "Overdue tasks need attention",
+                    "summary": f"{overdue} tasks are overdue and require immediate follow-up.",
+                    "severity": "high" if overdue >= 3 else "medium",
+                    "recommendations": ["Reconfirm deadlines", "Unblock owners"],
+                    "createdAt": now,
+                }
+            )
+        if planned > 0 and in_progress == 0 and review == 0:
+            insights.append(
+                {
+                    "id": DataService.new_id(),
+                    "projectId": project_id,
+                    "type": "next_action",
+                    "title": "No active tasks in progress",
+                    "summary": "Planned work exists but no tasks are moving. Start the next item.",
+                    "severity": "medium",
+                    "recommendations": ["Assign an owner", "Move top task to In Progress"],
+                    "createdAt": now,
+                }
+            )
+        if tasks:
+            completion_rate = round((completed / len(tasks)) * 100)
+            insights.append(
+                {
+                    "id": DataService.new_id(),
+                    "projectId": project_id,
+                    "type": "completion",
+                    "title": "Completion trend",
+                    "summary": f"{completion_rate}% of tasks are completed so far.",
+                    "severity": "low" if completion_rate >= 60 else "medium",
+                    "recommendations": ["Focus on closing open tasks", "Keep momentum steady"],
                     "createdAt": now,
                 }
             )
@@ -103,6 +139,45 @@ class AIService:
                 }
             )
         return insights
+
+    @staticmethod
+    def _normalize_task_status(status: Any) -> str:
+        if status is None:
+            return "planned"
+        value = str(status).strip().lower().replace(" ", "_")
+        mapping = {
+            "todo": "planned",
+            "backlog": "planned",
+            "planned": "planned",
+            "in_progress": "in_progress",
+            "review": "review",
+            "done": "completed",
+            "completed": "completed",
+            "blocked": "blocked",
+        }
+        return mapping.get(value, value)
+
+    @staticmethod
+    def _parse_date(value: Any) -> Any:
+        if not value:
+            return None
+        if isinstance(value, date):
+            return value
+        text = str(value)
+        try:
+            return datetime.fromisoformat(text.replace("Z", "+00:00")).date()
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _is_task_overdue(task: Dict[str, Any]) -> bool:
+        due_date = AIService._parse_date(task.get("dueDate"))
+        if not due_date:
+            return False
+        status = AIService._normalize_task_status(task.get("status"))
+        if status == "completed":
+            return False
+        return due_date < datetime.utcnow().date()
 
     @staticmethod
     def generate_task_drafts(project_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:

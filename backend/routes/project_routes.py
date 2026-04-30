@@ -94,6 +94,13 @@ def create_report(project_id: str):
     return created({"report": report})
 
 
+@project_bp.get("/reports")
+def list_all_reports():
+    page, page_size = ProjectService.parse_pagination(request)
+    result = ProjectService.list_all_reports(page, page_size)
+    return ok(result)
+
+
 @project_bp.get("/reports/<report_id>")
 def get_report(report_id: str):
     report = ProjectService.get_report(report_id)
