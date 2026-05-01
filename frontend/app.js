@@ -1077,7 +1077,35 @@
 
     async loadWorkspaces() {
       try {
-        const data = await api.listWorkspaces();
+        // Workspace list must be fetched via API_BASE_URL (avoid stale relative /api/v1/... requests)
+        const response = await fetch(`${API_BASE_URL}/workspaces?page=1`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const contentType = response.headers.get("content-type") || "";
+        const isJson = contentType.includes("application/json");
+
+        if (!response.ok) {
+          let message = `Request failed (${response.status})`;
+          if (isJson) {
+            const payload = await response.json().catch(() => ({}));
+            message = payload?.error?.message || payload?.message || payload?.error || message;
+          } else {
+            const text = await response.text().catch(() => "");
+            const parsed = safeJsonParse(text);
+            message =
+              parsed?.error?.message ||
+              parsed?.message ||
+              (text && text.slice(0, 200)) ||
+              message;
+          }
+          throw new Error(message);
+        }
+
+        const data = response.status === 204 ? null : isJson ? await response.json() : {};
         state.workspaces = Array.isArray(data?.items) ? data.items : [];
         render.workspaces();
       } catch (err) {
