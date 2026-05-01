@@ -1,6 +1,6 @@
 # AI Project Manager Assistant
 
-n AI-powered project operations platform built to help teams plan, track, and execute projects with clarity, accountability, and real-time decision support.
+An AI-powered project operations platform built to help teams plan, track, and execute projects with clarity, accountability, and real-time decision support.
 
 Designed as a practical project management workspace, this platform combines structured execution workflows with AI-assisted planning, task generation, project health monitoring, and stakeholder-ready reporting.
 ---
