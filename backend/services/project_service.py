@@ -184,50 +184,135 @@ class ProjectService:
 
     @staticmethod
     def get_project_health(project_id: str) -> Dict[str, Any]:
+        # Health is always derived from live project + task data.
         ProjectService.get_project(project_id)
-        health_items = DataService.list_collection("project_health")
-        for item in health_items:
-            if item.get("projectId") == project_id:
-                return item
+
         health = ProjectService._calculate_health(project_id)
-        DataService.add_item("project_health", health)
+
+        # Persist a single up-to-date snapshot for backward compatibility,
+        # while preventing duplicates (unique key: projectId).
+        items = DataService.list_collection("project_health")
+        filtered = [i for i in items if i.get("projectId") != project_id]
+        filtered.append(health)
+        DataService.save_collection("project_health", filtered)
         return health
 
     @staticmethod
     def _calculate_health(project_id: str) -> Dict[str, Any]:
+        project = ProjectService.get_project(project_id)
+        project_status = ProjectService._normalize_project_status(project.get("status"))
+
         tasks = [
             item
             for item in DataService.list_collection("tasks")
             if item.get("projectId") == project_id
         ]
+
+        def normalize_priority(value: Any) -> Any:
+            if value is None:
+                return None
+            text = str(value).strip().lower()
+            return text or None
+
+        today = datetime.utcnow().date()
+
         total = len(tasks)
-        blocked = len(
-            [t for t in tasks if ProjectService._normalize_task_status(t.get("status")) == "blocked"]
-        )
-        in_progress = len(
-            [t for t in tasks if ProjectService._normalize_task_status(t.get("status")) == "in_progress"]
-        )
-        review = len(
-            [t for t in tasks if ProjectService._normalize_task_status(t.get("status")) == "review"]
-        )
-        risk_score = 0
+        completed = 0
+        blocked = 0
+        overdue = 0
+        critical = 0
+
+        for task in tasks:
+            status = ProjectService._normalize_task_status(task.get("status"))
+            priority = normalize_priority(task.get("priority"))
+            if status == "completed":
+                completed += 1
+            if status == "blocked":
+                blocked += 1
+
+            # Overdue: dueDate exists, task not completed, dueDate < today
+            due_date = ProjectService._parse_date(task.get("dueDate"))
+            if due_date and status != "completed" and due_date < today:
+                overdue += 1
+
+            # Critical: open tasks with critical priority
+            if priority == "critical" and status != "completed":
+                critical += 1
+
+        completion_percent = 0
         if total > 0:
-            risk_score = (blocked * 2 + in_progress + review) / total
-        status = "green"
+            completion_percent = round((completed / total) * 100)
+
+        # Risk score is derived from live task signals + project status.
+        # Weights are tuned for interpretability (higher = riskier).
+        base = 0.0
+        if total > 0:
+            base = (blocked * 2.0 + overdue * 2.0 + critical * 1.5) / total
+
+        # Project status acts as a modifier.
+        modifier = 0.0
+        if project_status == "blocked":
+            modifier += 0.5
+        elif project_status == "on_hold":
+            modifier += 0.2
+        elif project_status in {"completed", "archived"}:
+            # Completed/archived projects should not remain "red" due to stale tasks.
+            base *= 0.2
+
+        risk_score = round(max(0.0, base + modifier), 2)
+
+        health_status = "green"
         if risk_score >= 0.6:
-            status = "red"
+            health_status = "red"
         elif risk_score >= 0.3:
-            status = "amber"
+            health_status = "amber"
+
+        risks: List[str] = []
+        suggestions: List[str] = []
+
+        if total == 0:
+            suggestions.append("Add tasks to start tracking execution health.")
+        if blocked > 0:
+            risks.append(f"{blocked} blocked task(s) may prevent progress.")
+            suggestions.append("Review blockers, assign an owner, and remove dependencies.")
+        if overdue > 0:
+            risks.append(f"{overdue} overdue task(s) may impact delivery dates.")
+            suggestions.append("Reconfirm due dates and reprioritize overdue work.")
+        if critical > 0:
+            risks.append(f"{critical} critical task(s) are still open.")
+            suggestions.append("Focus on critical tasks first; reduce WIP on non-critical items.")
+        if project_status == "on_hold":
+            risks.append("Project is on hold; timelines may slip without active execution.")
+            suggestions.append("Confirm next milestone and resume at least one task in progress.")
+        if project_status == "blocked":
+            risks.append("Project status is blocked.")
+            suggestions.append("Escalate the blocking issue and define an unblocking plan.")
+        if project_status in {"completed", "archived"}:
+            suggestions.append("Project is closed; health reflects historical snapshot.")
+
+        signals = [
+            f"Completion: {completion_percent}% ({completed}/{total})" if total > 0 else "Completion: 0% (0/0)",
+            f"Overdue tasks: {overdue}",
+            f"Blocked tasks: {blocked}",
+            f"Critical tasks: {critical}",
+            f"Project status: {project_status}",
+        ]
+
+        now = DataService.now_iso()
         return {
             "projectId": project_id,
-            "status": status,
-            "riskScore": round(risk_score, 2),
-            "signals": [
-                f"Blocked tasks: {blocked}",
-                f"In progress tasks: {in_progress}",
-                f"In review tasks: {review}",
-            ],
-            "updatedAt": DataService.now_iso(),
+            # Backward compatible alias
+            "status": health_status,
+            "healthStatus": health_status,
+            "riskScore": risk_score,
+            "signals": signals,
+            "risks": risks,
+            "suggestions": suggestions,
+            "completionPercent": completion_percent,
+            "overdueCount": overdue,
+            "blockedCount": blocked,
+            "criticalCount": critical,
+            "updatedAt": now,
         }
 
     @staticmethod

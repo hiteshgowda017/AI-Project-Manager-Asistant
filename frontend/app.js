@@ -3,7 +3,7 @@
 
   // Production backend (Render)
   const API_BASE_URL = "https://ai-pm-backend-0lfc.onrender.com/api/v1";
-
+  
   // ---------- Utilities ----------
   const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -606,16 +606,11 @@
         if (!el.insightList || !el.insightCount) return;
 
         el.insightList.innerHTML = "";
-        if (el.riskList) el.riskList.innerHTML = "";
-        if (el.suggestionList) el.suggestionList.innerHTML = "";
         const insights = Array.isArray(state.insights) ? state.insights : [];
         el.insightCount.textContent = String(insights.length);
 
         if (insights.length === 0) {
           el.insightList.innerHTML = '<div class="muted">No insights yet.</div>';
-          if (el.riskList) el.riskList.innerHTML = '<div class="muted">No risks detected.</div>';
-          if (el.suggestionList)
-            el.suggestionList.innerHTML = '<div class="muted">No suggestions yet.</div>';
           return;
         }
 
@@ -629,45 +624,6 @@
           `;
           el.insightList.appendChild(card);
         });
-
-        const risks = insights.filter(
-          (insight) =>
-            insight?.type === "risk" ||
-            insight?.severity === "high" ||
-            insight?.severity === "medium"
-        );
-        if (el.riskList) {
-          if (risks.length === 0) {
-            el.riskList.innerHTML = '<div class="muted">No risks detected.</div>';
-          } else {
-            risks.forEach((risk) => {
-              const card = document.createElement("div");
-              card.className = "list-item";
-              card.innerHTML = `
-                <strong>${escapeHtml(risk?.title || "Risk")}</strong>
-                <p class="muted">${escapeHtml(risk?.summary || "")}</p>
-              `;
-              el.riskList.appendChild(card);
-            });
-          }
-        }
-
-        if (el.suggestionList) {
-          const suggestions = insights.flatMap((insight) => insight?.recommendations || []);
-          if (suggestions.length === 0) {
-            el.suggestionList.innerHTML = '<div class="muted">No suggestions yet.</div>';
-          } else {
-            suggestions.slice(0, 6).forEach((text) => {
-              const card = document.createElement("div");
-              card.className = "list-item";
-              card.innerHTML = `
-                <strong>Suggested action</strong>
-                <p class="muted">${escapeHtml(text)}</p>
-              `;
-              el.suggestionList.appendChild(card);
-            });
-          }
-        }
       } catch (err) {
         console.error(err);
       }
@@ -677,14 +633,57 @@
       try {
         if (!el.healthPanel || !el.healthStatus || !el.healthScore || !el.healthSignals) return;
 
+        const setListCards = (risks, suggestions) => {
+          try {
+            if (el.riskList) {
+              el.riskList.innerHTML = "";
+              const list = Array.isArray(risks) ? risks : [];
+              if (list.length === 0) {
+                el.riskList.innerHTML = '<div class="muted">No risks detected.</div>';
+              } else {
+                list.slice(0, 8).forEach((text) => {
+                  const card = document.createElement("div");
+                  card.className = "list-item";
+                  card.innerHTML = `
+                    <strong>Risk</strong>
+                    <p class="muted">${escapeHtml(String(text))}</p>
+                  `;
+                  el.riskList.appendChild(card);
+                });
+              }
+            }
+
+            if (el.suggestionList) {
+              el.suggestionList.innerHTML = "";
+              const list = Array.isArray(suggestions) ? suggestions : [];
+              if (list.length === 0) {
+                el.suggestionList.innerHTML = '<div class="muted">No suggestions yet.</div>';
+              } else {
+                list.slice(0, 8).forEach((text) => {
+                  const card = document.createElement("div");
+                  card.className = "list-item";
+                  card.innerHTML = `
+                    <strong>Suggested action</strong>
+                    <p class="muted">${escapeHtml(String(text))}</p>
+                  `;
+                  el.suggestionList.appendChild(card);
+                });
+              }
+            }
+          } catch (err) {
+            console.error(err);
+          }
+        };
+
         if (!health) {
           el.healthStatus.textContent = "--";
           el.healthScore.textContent = "--";
           el.healthSignals.innerHTML = "";
+          setListCards([], []);
           return;
         }
 
-        el.healthStatus.textContent = health.status || "--";
+        el.healthStatus.textContent = health.healthStatus || health.status || "--";
         el.healthScore.textContent = String(health.riskScore ?? "--");
         el.healthSignals.innerHTML = "";
 
@@ -694,6 +693,9 @@
           li.textContent = String(signal);
           el.healthSignals.appendChild(li);
         });
+
+        // Keep Risks/Suggestions cards in sync with health.
+        setListCards(health.risks, health.suggestions);
       } catch (err) {
         console.error(err);
       }
