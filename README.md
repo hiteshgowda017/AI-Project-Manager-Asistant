@@ -6,7 +6,7 @@ Designed as a practical project management workspace, this platform combines str
 ---
 ## Preview
 
-![AI Project Manager Assistant Dashboard](assets/dashboard-preview.png)
+![AI Project Manager Assistant Dashboard](assets/dashboard-preview.png.png)
 
 ## Overview
 
