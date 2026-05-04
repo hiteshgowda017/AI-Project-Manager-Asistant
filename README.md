@@ -237,7 +237,7 @@ This makes it a practical AI product focused on real execution workflows rather 
 
 ## Author
 
-**Hitesh Gowda**
+**Hitesh Gowda H**
 AI & Data Science Engineering Student
 Focused on building practical AI systems and execution-driven products.
 
